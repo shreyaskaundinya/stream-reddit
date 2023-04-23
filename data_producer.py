@@ -15,8 +15,44 @@ USER_AGENT = configParser["DATA_PRODUCER"].get("user_agent")
 
 reddit = praw.Reddit(client_id=CLIENT_ID, client_secret=CLIENT_SECRET, user_agent=USER_AGENT)
 HOT_POSTS = reddit.subreddit('MachineLearning').hot()
+#for x in HOT_POSTS:
+#    print(x.selftext)
 #print(type(HOT_POSTS.hot()))
 #print(dir(praw.models.reddit.subreddit.Subreddit))
+# Kafka broker information
+kafka_broker = 'localhost:9092'
+kafka_topic = 'reddit_dbt'
+
+
+import threading
+interval = 5
+# print(dir(HOT_POSTS))
+l = []
+dict1= {}
+for x in HOT_POSTS:
+    try:
+        #print(x.title)
+        l.append(str(x.selftext).encode('utf-8'))
+    except:
+        #print(e)
+        pass
+
+my_producer = KafkaProducer(bootstrap_servers = kafka_broker)
+def myPeriodicFunction(l, start):
+    for i in range(start, start+5):
+        my_producer.send("data", l[i])
+count = 0
+def startTimer():
+        global count
+        threading.Timer(interval, startTimer).start()
+        print("HELLOOOOO", count)
+        myPeriodicFunction(l, count)
+        if(count<100):
+            count = count + 5
+        else:
+            return
+
+startTimer()
 
 
 '''
@@ -41,36 +77,4 @@ HOT_POSTS = reddit.subreddit('MachineLearning').hot()
 'total_awards_received', 'treatment_tags', 'unhide', 'unsave', 'ups', 'upvote', 'upvote_ratio', 'url', 'user_reports', 'view_count', 'visited', 
 'whitelist_status', 'wls']
 '''
-
-
-
-import threading
-interval = 5
-# print(dir(HOT_POSTS))
-l = []
-dict1= {}
-for x in HOT_POSTS:
-    try:
-        #print(x.title)
-        l.append(x.created_utc)
-    except:
-        #    print(e)
-        pass
-
-my_producer = KafkaProducer( bootstrap_servers = ['localhost:9092'],  value_serializer = lambda x:dumps(x).encode('utf-8'))  
-def myPeriodicFunction(l, start):
-    for i in range(start, start+5):
-        my_producer.send("data", value = l[i])
-count = 0
-def startTimer():
-        global count
-        threading.Timer(interval, startTimer).start()
-        print("HELLOOOOO", count)
-        myPeriodicFunction(l, count)
-        if(count<100):
-            count = count + 5
-        else:
-            return
-
-startTimer()
 
