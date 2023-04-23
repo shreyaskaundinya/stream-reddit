@@ -14,7 +14,7 @@ USER_AGENT = configParser["DATA_PRODUCER"].get("user_agent")
 #print(CLIENT_ID, CLIENT_SECRET, USER_AGENT)
 
 reddit = praw.Reddit(client_id=CLIENT_ID, client_secret=CLIENT_SECRET, user_agent=USER_AGENT)
-HOT_POSTS = reddit.subreddit('MachineLearning').hot()
+HOT_POSTS = reddit.subreddit('MachineLearning+redditdev+learnpython').hot()
 #for x in HOT_POSTS:
 #    print(x.selftext)
 #print(type(HOT_POSTS.hot()))
@@ -40,12 +40,13 @@ for x in HOT_POSTS:
 my_producer = KafkaProducer(bootstrap_servers = kafka_broker)
 def myPeriodicFunction(l, start):
     for i in range(start, start+5):
-        my_producer.send("data", l[i])
+        my_producer.send(kafka_topic, l[i])
+    my_producer.flush()
 count = 0
 def startTimer():
         global count
         threading.Timer(interval, startTimer).start()
-        print("HELLOOOOO", count)
+        #print("HELLOOOOO", count)
         myPeriodicFunction(l, count)
         if(count<100):
             count = count + 5
@@ -77,4 +78,3 @@ startTimer()
 'total_awards_received', 'treatment_tags', 'unhide', 'unsave', 'ups', 'upvote', 'upvote_ratio', 'url', 'user_reports', 'view_count', 'visited', 
 'whitelist_status', 'wls']
 '''
-
