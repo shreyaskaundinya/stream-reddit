@@ -30,7 +30,7 @@ HOT_POSTS = reddit.subreddit(argv[1]).hot()
 # Kafka broker information
 kafka_broker = 'localhost:9092'
 kafka_topic = argv[1]
-interval = 5
+interval = 50
 
 # print(dir(HOT_POSTS))
 l = []
@@ -54,22 +54,27 @@ my_producer = KafkaProducer(bootstrap_servers = kafka_broker)
 
 def myPeriodicFunction(l, start):
 	global kafka_topic
-	print(f"[LOG] SENDING DATA to BROKER from subreddit= r/{kafka_topic}!")
-	for i in range(start, start+5):
-		my_producer.send(kafka_topic, json.dumps(l[i]).encode('utf-8'))
 	
-	my_producer.flush()
+	print(f"[LOG] SENDING DATA to BROKER from subreddit= r/{kafka_topic}!")
+	
+	try:
+		for i in range(start, start+interval):
+			my_producer.send(kafka_topic, json.dumps(l[i]).encode('utf-8'))
+		my_producer.flush()
+	except:		
+		pass
 
 
 count = 0
 
 def startTimer():
         global count
-        threading.Timer(interval, startTimer).start()
+        threading.Timer(5, startTimer).start()
         #print("HELLOOOOO", count)
         myPeriodicFunction(l, count)
+        
         if(count<100):
-            count = count + 5
+            count = count + interval
         else:
             return
 

@@ -1,4 +1,4 @@
-from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession, DataFrameWriterV2 
 from pyspark.sql.functions import *
 from pyspark.sql.functions import udf
 from pyspark.streaming import StreamingContext
@@ -9,7 +9,7 @@ from pyspark.sql.types import StringType, DecimalType, IntegerType
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from consumer import analyzer_function
 from sys import argv
-
+import tempfile
 
 import time
 import json
@@ -53,10 +53,14 @@ def read_from_stream():
 	start = time.time()
 	df_sent = df_val.withColumn("_sentiment", udf_analyzer_function(df_val.selftext))
 	end = time.time()
-	print("[LOG] Elapsed time : {end-start}")
+	
+	df_eps = spark.createDataFrame([(f"{end-start}",)], schema=["Elapsed time!!!!",])
+
 	
 	df_wc = df_sent.withColumn("_wc", udf_naive_wc(df_val.selftext))	
+
 	df_wc.select("selftext", "_sentiment", "_wc").writeStream.format("console").start().awaitTermination()
+
 
 
 if __name__ == "__main__":
