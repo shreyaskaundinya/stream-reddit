@@ -4,6 +4,7 @@ import praw
 from time import sleep  
 from json import dumps  
 from kafka import KafkaProducer  
+import json
 
 configParser = ConfigParser()
 config = configParser.read("config")
@@ -32,17 +33,27 @@ dict1= {}
 for x in HOT_POSTS:
     try:
         #print(x.title)
-        l.append(str(x.selftext).encode('utf-8'))
+        l.append(
+		    {
+				"id": str(x.id),
+				"selftext": str(x.selftext),
+				"title": str(x.title),
+				"created": str(x.created_utc)
+		   	}
+       	)
     except:
         #print(e)
         pass
 
 my_producer = KafkaProducer(bootstrap_servers = kafka_broker)
+
 def myPeriodicFunction(l, start):
+    print("[LOG] SENDING DATA to BROKER!! wohoo")
     for i in range(start, start+5):
-        my_producer.send(kafka_topic, l[i])
+        my_producer.send(kafka_topic, json.dumps(l[i]).encode('utf-8'))
     my_producer.flush()
 count = 0
+
 def startTimer():
         global count
         threading.Timer(interval, startTimer).start()

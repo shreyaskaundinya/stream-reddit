@@ -1,5 +1,5 @@
 from kafka import KafkaConsumer
-import sqlite3 as sql 
+import sqlite3
 from sys import argv
 from json import loads
 
@@ -16,20 +16,21 @@ def init_consumer():
 	global CONSUMER
 	print(f"[LOG] Creating database consumer!")
 	CONSUMER = KafkaConsumer(bootstrap_servers="localhost:9092")
-	print(f"[LOG] Subscribing to {argv[2]}")
-	CONSUMER.subscribe([argv[2]])
+	print(f"[LOG] Subscribing to {argv[1]}")
+	CONSUMER.subscribe([argv[1]])
 
 def cleanup():
 	global DB_CON, CONSUMER
 	print("[LOG] Cleaning up...")
-    CONSUMER.close()
-    DB_CON.close()
-    print("[LOG] Goodbye!")
+	CONSUMER.close()
+	DB_CON.close()
+	print("[LOG] Goodbye!")
 
 def insert_post(post):
 	"""
 	Post : {id, title, selftext, created}
 	"""
+	print(type(post), post)
 	global DB_CON
 	cur = DB_CON.cursor()
 	q = """
@@ -38,7 +39,7 @@ def insert_post(post):
 	cur.execute(q, post["id"], post["title"], post["selftext"], post["created"])
 	DB_CON.commit()
 	cur.close()
-	print(f"[LOG] Added post with id={post["id"]} to db")
+	#print(f"[LOG] Added post with id={post["id"]} to db")
 
 def create_table():
 	global DB_CON
@@ -79,10 +80,8 @@ if __name__ == "__main__":
 	init_consumer()
 	try:
 		for msg in CONSUMER:
-			# insert_post(
-				#loads(msg.value.decode("utf-8")))
-			#)
-		    print(f"[LOG] Received {msg.value.decode("utf-8")}")
+			insert_post(loads(msg.value.decode("utf-8")))
+			print(f"[LOG] Received {msg.value.decode('utf-8')}")
 
 	except KeyboardInterrupt as e:
 		cleanup()
