@@ -5,6 +5,8 @@ from time import sleep
 from json import dumps  
 from kafka import KafkaProducer  
 import json
+from sys import argv
+import threading
 
 configParser = ConfigParser()
 config = configParser.read("config")
@@ -15,18 +17,21 @@ USER_AGENT = configParser["DATA_PRODUCER"].get("user_agent")
 #print(CLIENT_ID, CLIENT_SECRET, USER_AGENT)
 
 reddit = praw.Reddit(client_id=CLIENT_ID, client_secret=CLIENT_SECRET, user_agent=USER_AGENT)
-HOT_POSTS = reddit.subreddit('MachineLearning+redditdev+learnpython').hot()
+HOT_POSTS = reddit.subreddit(argv[1]).hot()
+
+
 #for x in HOT_POSTS:
 #    print(x.selftext)
 #print(type(HOT_POSTS.hot()))
 #print(dir(praw.models.reddit.subreddit.Subreddit))
+
+
+
 # Kafka broker information
 kafka_broker = 'localhost:9092'
-kafka_topic = 'reddit_dbt'
-
-
-import threading
+kafka_topic = argv[1]
 interval = 5
+
 # print(dir(HOT_POSTS))
 l = []
 dict1= {}
@@ -48,10 +53,14 @@ for x in HOT_POSTS:
 my_producer = KafkaProducer(bootstrap_servers = kafka_broker)
 
 def myPeriodicFunction(l, start):
-    print("[LOG] SENDING DATA to BROKER!! wohoo")
-    for i in range(start, start+5):
-        my_producer.send(kafka_topic, json.dumps(l[i]).encode('utf-8'))
-    my_producer.flush()
+	global kafka_topic
+	print(f"[LOG] SENDING DATA to BROKER from subreddit= r/{kafka_topic}!")
+	for i in range(start, start+5):
+		my_producer.send(kafka_topic, json.dumps(l[i]).encode('utf-8'))
+	
+	my_producer.flush()
+
+
 count = 0
 
 def startTimer():
