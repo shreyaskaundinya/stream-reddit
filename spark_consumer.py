@@ -7,6 +7,8 @@ from kafka import KafkaConsumer
 from pyspark.sql.functions import decode
 from pyspark.sql.types import StringType, DecimalType
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
+from consumer import analyzer_function
+
 import time
 import json
 
@@ -23,19 +25,6 @@ for message in kafka_consumer:
     reddit_data = message.value.decode('utf-8')
     print(reddit_data)
 """
-
-
-analyzer = SentimentIntensityAnalyzer()
-
-def analyzer_function(post):
-	#print(post)
-	sentiment = analyzer.polarity_scores(post)
-	if(sentiment["compound"]>0.05):
-		return "good"
-	elif(sentiment["compound"]<0.05):
-		return "bad"
-	else:
-		return "neutral"
 	
 def give_me_selftext(post):
 	try:
